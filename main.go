@@ -4,20 +4,31 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
+	"log"
+	"net"
 	"strings"
 )
 
 func main() {
-	const filePath = "messages.txt"
-	f, err := os.Open(filePath)
-	if err != nil {
-		fmt.Printf("error: could not open file %s: %s", filePath, err.Error())
-	}
-	outputs := getChannelLines(f)
+	const port = ":42069"
 
-	for s := range outputs {
-		fmt.Printf("read: %s\n", s)
+	l, err := net.Listen("tcp", port)
+	if err != nil {
+		log.Fatalf("error: could not create listener on port %s: %s\n", port, err.Error())
+	}
+
+	for {
+		f, err := l.Accept()
+		if err != nil {
+			log.Fatalf("error: could not accept connection from port %s\n", port)
+			return
+		}
+		fmt.Println("Connection accepted")
+		outputs := getChannelLines(f)
+		for s := range outputs {
+			fmt.Printf("%s\n", s)
+		}
+		fmt.Println("channel closed")
 	}
 }
 
